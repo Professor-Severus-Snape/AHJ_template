@@ -1,34 +1,48 @@
+# название workflow:
 name: Netology AHJ
 
+# запуск workflow:
 on:
+  # при каждом пуше в репозиторий:
   push:
 
-  # Allows you to run this workflow manually from the Actions tab
+  # запуск вручную из вкладки Actions на GitHub:
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+# настройка разрешений для токена GITHUB_TOKEN для деплоя на GitHub Pages:
 permissions:
+  # разрешить чтение содержимого:
   contents: read
+  # разрешить запись на GitHub Pages:
   pages: write
+  # разрешить использование токена идентификации:
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# конкурентность:
 concurrency:
+  # ограничивает выполнение одного workflow в группе 'pages' одновременно:
   group: 'pages'
+  # не отменяет текущие запуски, что позволяет завершить уже запущенные развертывания:
   cancel-in-progress: false
 
+# описание работ:
 jobs:
   eslint:
+    # работа будет выполнена на последней версии Ubuntu:
     runs-on: ubuntu-latest
 
+    # шаги выполнения работы:
     steps:
+      # клонирование репозитория:
       - uses: actions/checkout@v4
+      # установка Node.js версии 20.13.1 и настраивание кеширования для npm:
       - uses: actions/setup-node@v4
         with:
           node-version: 20.13.1
           cache: 'npm'
+      # установка зависимостей проекта:
       - run: npm install
+      # запуск линтера для проверки кода на соответствие стандартам:
       - run: npm run lint
 
   test:
@@ -44,10 +58,14 @@ jobs:
       - run: npm run test
 
   build:
+    # сборка осуществляется только после успешного завершения работ eslint и test:
     needs: [eslint, test]
 
+    # настройки окружения для развертывания на GitHub Pages:
     environment:
+      # имя окружения:
       name: github-pages
+      # URL для развертывания, используется вывод из шага deployment:
       url: ${{ steps.deployment.outputs.page_url }}
 
     runs-on: ubuntu-latest
@@ -60,12 +78,15 @@ jobs:
           cache: 'npm'
       - run: npm install
       - run: npm run build
+      # настройка для GitHub Pages:
       - name: Setup Pages
         uses: actions/configure-pages@v4
+      # загрузка артефактов сборки (каталог dist):
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'dist'
+      # развертывание на GitHub Pages:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
